@@ -1,10 +1,10 @@
 # - Find the FFTW library
 #
 # Original version of this file:
-#   Copyright (c) 2015, Wenzel Jakob (under BSD 2-clause license, see LICENSE.txt file in this directory)
+#   Copyright (c) 2015, Wenzel Jakob
 #   https://github.com/wjakob/layerlab/blob/master/cmake/FindFFTW.cmake, commit 4d58bfdc28891b4f9373dfe46239dda5a0b561c6
 # Modifications:
-#   Copyright (c) 2017, Patrick Bos (under BSD 3-clause license, see LICENSE file distributed with this software)
+#   Copyright (c) 2017, Patrick Bos
 #
 # Usage:
 #   find_package(FFTW [REQUIRED] [QUIET] [COMPONENTS component1 ... componentX] )
@@ -34,7 +34,7 @@
 #
 
 # TODO (maybe): extend with ExternalProject download + build option
-# TODO: turn into independent project on github (perhaps also on conda so it can be used as dependency for xtensor-fftw)
+# TODO: put on conda-forge
 
 #If environment variable FFTWDIR is specified, it has same effect as FFTW_ROOT
 if( NOT FFTW_ROOT AND ENV{FFTWDIR} )
