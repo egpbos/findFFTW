@@ -53,7 +53,7 @@ if(result)
     message(FATAL_ERROR "Build step for findFFTW failed: ${result}")
 endif()
 
-set(findFFTW_DIR ${CMAKE_CURRENT_BINARY_DIR}/findFFTW-src/Modules/findFFTW)
+set(findFFTW_DIR ${CMAKE_CURRENT_BINARY_DIR}/findFFTW-src)
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${findFFTW_DIR}")
 ```
@@ -89,5 +89,5 @@ git clone https://github.com/egpbos/findfftw.git PREFIX/findFFTW
 
 Then add the following to your `CMakeLists.txt` to allow CMake to find the module:
 ```cmake
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "PREFIX/findFFTW/Modules/findFFTW")
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "PREFIX/findFFTW")
 ```
