@@ -30,6 +30,17 @@ This package supports the following components:
 - `DOUBLE_OPENMP_LIB`
 - `LONGDOUBLE_OPENMP_LIB`
 
+and the following linking targets
+
+- `FFTW::Float`
+- `FFTW::Double`
+- `FFTW::LongDouble`
+- `FFTW::FloatThreads`
+- `FFTW::DoubleThreads`
+- `FFTW::LongDoubleThreads`
+- `FFTW::FloatOpenMP`
+- `FFTW::DoubleOpenMP`
+- `FFTW::LongDoubleOpenMP`
 
 # Adding to your project
 
