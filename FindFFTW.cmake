@@ -4,7 +4,7 @@
 #   Copyright (c) 2015, Wenzel Jakob (under BSD 2-clause license, see LICENSE.txt file in this directory)
 #   https://github.com/wjakob/layerlab/blob/master/cmake/FindFFTW.cmake, commit 4d58bfdc28891b4f9373dfe46239dda5a0b561c6
 # Modifications:
-#   Copyright (c) 2017, Patrick Bos (under BSD 3-clause license, see LICENSE file distributed with this software)
+#   Copyright (c) 2017, Patrick Bos (under BSD 3-clause license)
 #   MKL code adapted from:
 #   https://github.com/InsightSoftwareConsortium/ITK/blob/master/CMake/FindFFTW.cmake, commit 8898b7f622c14f828a807a2ccb2fb9217538dc07
 #
@@ -19,10 +19,12 @@
 #   FFTW_INCLUDE_DIRS           ... fftw include directory paths
 #
 # The following variables will be checked by the function
-#   FFTW_USE_STATIC_LIBS        ... if true, only static libraries are found, otherwise both static and shared.
+#   FFTW_USE_STATIC_LIBS        ... if true, only static libraries are found, otherwise both static and shared
 #   FFTW_USE_MKL                ... if true, use the MKL version of FFTW
-#   FFTW_ROOT                   ... if set, the libraries are exclusively searched
-#                                   under this path
+#   FFTW_ROOT                   ... if set and FFTW_USE_MKL is false, the standard FFTW
+#                                   libraries are exclusively searched under this path
+#   FFTW_MKL_ROOT               ... if set and FFTW_USE_MKL is true, the MKL FFTW libraries
+#                                   are exclusively searched under this path
 #
 # Components:
 # This package searches for different components depending on if FFTW_USE_MKL is set to true. For non-MKL,
@@ -38,11 +40,11 @@
 #   FFTW_LONGDOUBLE_OPENMP_LIB
 #
 # For MKL, the package searches for the following components:
-#   MKL_INTEL_ILP64_LIB (64-bit OS)
-#   MKL_INTEL_C_LIB (32-bit Windows OS)
-#   MKL_INTEL_LIB (32-bit non-Windows OS)
-#   MKL_CORE_LIB
-#   MKL_SEQUENTIAL_LIB
+#   FFTW_MKL_INTEL_ILP64_LIB (64-bit OS)
+#   FFTW_MKL_INTEL_C_LIB (32-bit Windows OS)
+#   FFTW_MKL_INTEL_LIB (32-bit non-Windows OS)
+#   FFTW_MKL_CORE_LIB
+#   FFTW_MKL_SEQUENTIAL_LIB
 #
 
 # TODO (maybe): extend with ExternalProject download + build option
@@ -220,8 +222,8 @@ if (NOT FFTW_ROOT)
 
 endif()
 
-# If any of the required packages were not found, findFFTW will fail. If we did
-# not have FFTW_USE_MKL to be true, try searching in the MKL directories.
+# If none of the packages were found and FFTW_USE_MKL was not true, then try
+# searching the MKL directories for FFTW.
 if (NOT FFTW_USE_MKL AND (
   NOT FFTW_DOUBLE_LIB OR
   NOT FFTW_FLOAT_LIB OR
@@ -250,58 +252,49 @@ endif()
 
 # Find MKL version of FFTW .....................................................
 
-# If FFTW_ROOT is not set and want to use MKL, set FFTW_ROOT first
-if( NOT FFTW_ROOT AND FFTW_USE_MKL )
+# If FFTW_MKL_ROOT is not set and we want to use MKL, set FFTW_MKL_ROOT first
+if( NOT FFTW_MKL_ROOT AND FFTW_USE_MKL )
 
   if ( ENV{MKLDIR} )
-    set(FFTW_ROOT $ENV{MKLDIR})
+    set(FFTW_MKL_ROOT $ENV{MKLDIR})
   elseif(WIN32)
-    set(FFTW_ROOT_default "C:/Program Files (x86)/IntelSWTools/compilers_and_libraries/windows/mkl")
+    set(FFTW_MKL_ROOT "C:/Program Files (x86)/IntelSWTools/compilers_and_libraries/windows/mkl")
   elseif(APPLE)
-    set(FFTW_ROOT_default "/opt/intel/compilers_and_libraries/mac/mkl")
+    set(FFTW_MKL_ROOT "/opt/intel/compilers_and_libraries/mac/mkl")
   elseif(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
-    set(FFTW_ROOT_default "/opt/intel/compilers_and_libraries/linux/mkl")
+    set(FFTW_MKL_ROOT "/opt/intel/compilers_and_libraries/linux/mkl")
   else()
     message(FATAL_ERROR "System not supported for MKL.")
   endif()
   
-  set(FFTW_ROOT ${FFTW_ROOT_default} CACHE PATH "Intel path containing MKL" FORCE)
 endif()
 
-if ( FFTW_USE_MKL )
+if ( FFTW_MKL_ROOT )
 
-  # Set FFTW include directories
-  set(FFTW_INC_SEARCHPATH ${FFTW_ROOT}/include/fftw)
-
-  find_path(FFTW_INCLUDE_PATH
+  find_path(FFTW_MKL_INCLUDE_PATH
     NAMES "fftw3.h"
-    PATHS ${FFTW_INC_SEARCHPATH}
+    PATHS ${FFTW_MKL_ROOT}/include/fftw
     NO_DEFAULT_PATH # so it finds the fftw.h file in the MKL directory
   )
 
-  if( FFTW_INCLUDE_PATH )
-    file(TO_CMAKE_PATH "${FFTW_INCLUDE_PATH}" FFTW_INCLUDE_PATH)
-    set(FFTW_INCLUDE_DIRS ${FFTW_INCLUDE_PATH})
+  if( FFTW_MKL_INCLUDE_PATH )
+    file(TO_CMAKE_PATH "${FFTW_MKL_INCLUDE_PATH}" FFTW_MKL_INCLUDE_PATH)
+    set(FFTW_MKL_INCLUDE_DIRS ${FFTW_MKL_INCLUDE_PATH})
   endif()
 
   # Create list of FFTW libraries to find
   if(CMAKE_SIZEOF_VOID_P EQUAL "8")
     # 64-bit OS
     if(APPLE)
-      set(FFTW_LIB_SEARCHPATH ${FFTW_ROOT}/lib)
+      set(FFTW_MKL_LIB_SEARCHPATH ${FFTW_MKL_ROOT}/lib)
     else()
-      set(FFTW_LIB_SEARCHPATH ${FFTW_ROOT}/lib/intel64)
+      set(FFTW_MKL_LIB_SEARCHPATH ${FFTW_MKL_ROOT}/lib/intel64)
     endif()
     set(MKL_LIBRARY mkl_intel_ilp64)
-    if(WIN32)
-      set(MKL_OPTIONS /DMKL_ILP64)
-    else()
-      set(MKL_OPTIONS -DMKL_ILP64 -m64)
-    endif()
   
   else()
     # not 64-bit OS
-    set(FFTW_LIB_SEARCHPATH ${FFTW_ROOT}/lib/ia32)
+    set(FFTW_MKL_LIB_SEARCHPATH ${FFTW_MKL_ROOT}/lib/ia32)
     if(WIN)
       set(MKL_LIBRARY mkl_intel_c)
     else()
@@ -311,135 +304,110 @@ if ( FFTW_USE_MKL )
 
   set(MKL_EXTRA_LIBRARIES mkl_core)
   list(APPEND MKL_EXTRA_LIBRARIES mkl_sequential)
-  set(FFTW_LIBRARY_NAMES ${MKL_LIBRARY} ${MKL_EXTRA_LIBRARIES})
-  
-  macro(FFTWD_LIB_START)
-    unset(FFTWD_LIB CACHE)
-    unset(FFTWF_LIB CACHE)
-    unset(FFTWD_THREADS_LIB CACHE)
-    unset(FFTWF_THREADS_LIB CACHE)
-    if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
-      set(FFTWD_LIB -Wl,--start-group)
-    endif()
-  endmacro()
+  set(FFTW_MKL_LIBRARY_NAMES ${MKL_LIBRARY} ${MKL_EXTRA_LIBRARIES})
 
-  macro(FFTWD_LIB_END)
-    if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
-      list(APPEND FFTWD_LIB -Wl,--end-group -lpthread -lm -ldl)
-    endif()
-  endmacro()
-
-  # Find each library in FFTW_LIBRARY_NAMES
-  FFTWD_LIB_START()
-  foreach(LIB ${FFTW_LIBRARY_NAMES})
+  # Find each library in FFTW_MKL_LIBRARY_NAMES
+  foreach(LIB ${FFTW_MKL_LIBRARY_NAMES})
     string(TOUPPER ${LIB} LIB_UPPER)
-    mark_as_advanced(${LIB_UPPER}_LIB)
-    set(FFTW_LIBRARIES ${FFTW_LIBRARIES} ${LIB_UPPER}_LIB)
+    mark_as_advanced(FFTW_${LIB_UPPER}_LIB)
     set(LIB_NAME ${CMAKE_STATIC_LIBRARY_PREFIX}${LIB}${CMAKE_STATIC_LIBRARY_SUFFIX})
-    find_library(${LIB_UPPER}_LIB ${LIB_NAME} ${FFTW_LIB_SEARCHPATH})
-    if(${LIB_UPPER}_LIB)
-      set(${LIB}_FOUND TRUE)
-      list(APPEND FFTWD_LIB ${${LIB_UPPER}_LIB})
-    else()
-      message(FATAL_ERROR "${LIB_NAME} not found.")
+    find_library(FFTW_${LIB_UPPER}_LIB ${LIB_NAME} ${FFTW_LIB_SEARCHPATH})
+    if(FFTW_${LIB_UPPER}_LIB)
+      set(FFTW_${LIB}_FOUND TRUE)
+      set(FFTW_LIBRARIES ${FFTW_LIBRARIES} FFTW_${LIB_UPPER}_LIB)
     endif()
   endforeach()
-  FFTWD_LIB_END()
-  add_compile_options(${MKL_OPTIONS})
 
 endif()
 
 # Components :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 
 # MKL case handled above in MKL section
-if ( NOT FFTW_USE_MKL )
-
-  if (FFTW_DOUBLE_LIB)
-    set(FFTW_DOUBLE_LIB_FOUND TRUE)
-    set(FFTW_LIBRARIES ${FFTW_LIBRARIES} ${FFTW_DOUBLE_LIB})
-  else()
-    set(FFTW_DOUBLE_LIB_FOUND FALSE)
-  endif()
-
-  if (FFTW_FLOAT_LIB)
-    set(FFTW_FLOAT_LIB_FOUND TRUE)
-    set(FFTW_LIBRARIES ${FFTW_LIBRARIES} ${FFTW_FLOAT_LIB})
-  else()
-    set(FFTW_FLOAT_LIB_FOUND FALSE)
-  endif()
-
-  if (FFTW_LONGDOUBLE_LIB)
-    set(FFTW_LONGDOUBLE_LIB_FOUND TRUE)
-    set(FFTW_LIBRARIES ${FFTW_LIBRARIES} ${FFTW_LONGDOUBLE_LIB})
-  else()
-    set(FFTW_LONGDOUBLE_LIB_FOUND FALSE)
-  endif()
-
-  if (FFTW_THREADS_LIB)
-    set(FFTW_THREADS_LIB_FOUND TRUE)
-    set(FFTW_LIBRARIES ${FFTW_LIBRARIES} ${FFTW_THREADS_LIB})
-  else()
-    set(FFTW_THREADS_LIB_FOUND FALSE)
-  endif()
-
-  if (FFTW_FLOAT_THREADS_LIB)
-    set(FFTW_FLOAT_THREADS_LIB_FOUND TRUE)
-    set(FFTW_LIBRARIES ${FFTW_LIBRARIES} ${FFTW_FLOAT_THREADS_LIB})
-  else()
-    set(FFTW_FLOAT_THREADS_LIB_FOUND FALSE)
-  endif()
-
-  if (FFTW_LONGDOUBLE_THREADS_LIB)
-    set(FFTW_LONGDOUBLE_THREADS_LIB_FOUND TRUE)
-    set(FFTW_LIBRARIES ${FFTW_LIBRARIES} ${FFTW_LONGDOUBLE_THREADS_LIB})
-  else()
-    set(FFTW_LONGDOUBLE_THREADS_LIB_FOUND FALSE)
-  endif()
-
-  if (FFTW_OPENMP_LIB)
-    set(FFTW_OPENMP_LIB_FOUND TRUE)
-    set(FFTW_LIBRARIES ${FFTW_LIBRARIES} ${FFTW_OPENMP_LIB})
-  else()
-    set(FFTW_OPENMP_LIB_FOUND FALSE)
-  endif()
-
-  if (FFTW_FLOAT_OPENMP_LIB)
-    set(FFTW_FLOAT_OPENMP_LIB_FOUND TRUE)
-    set(FFTW_LIBRARIES ${FFTW_LIBRARIES} ${FFTW_FLOAT_OPENMP_LIB})
-  else()
-    set(FFTW_FLOAT_OPENMP_LIB_FOUND FALSE)
-  endif()
-
-  if (FFTW_LONGDOUBLE_OPENMP_LIB)
-    set(FFTW_LONGDOUBLE_OPENMP_LIB_FOUND TRUE)
-    set(FFTW_LIBRARIES ${FFTW_LIBRARIES} ${FFTW_LONGDOUBLE_OPENMP_LIB})
-  else()
-    set(FFTW_LONGDOUBLE_OPENMP_LIB_FOUND FALSE)
-  endif()
-
-  #--------------------------------------- end components
-
-  set( CMAKE_FIND_LIBRARY_SUFFIXES ${CMAKE_FIND_LIBRARY_SUFFIXES_SAV} )
-
-  include(FindPackageHandleStandardArgs)
-
-  find_package_handle_standard_args(FFTW
-          REQUIRED_VARS FFTW_INCLUDE_DIRS
-          HANDLE_COMPONENTS
-          )
-
-  mark_as_advanced(
-          FFTW_INCLUDE_DIRS
-          FFTW_LIBRARIES
-          FFTW_FLOAT_LIB
-          FFTW_DOUBLE_LIB
-          FFTW_LONGDOUBLE_LIB
-          FFTW_FLOAT_THREADS_LIB
-          FFTW_DOUBLE_THREADS_LIB
-          FFTW_LONGDOUBLE_THREADS_LIB
-          FFTW_FLOAT_OPENMP_LIB
-          FFTW_DOUBLE_OPENMP_LIB
-          FFTW_LONGDOUBLE_OPENMP_LIB
-          )
-
+if (FFTW_DOUBLE_LIB)
+  set(FFTW_DOUBLE_LIB_FOUND TRUE)
+  set(FFTW_LIBRARIES ${FFTW_LIBRARIES} ${FFTW_DOUBLE_LIB})
+else()
+  set(FFTW_DOUBLE_LIB_FOUND FALSE)
 endif()
+
+if (FFTW_FLOAT_LIB)
+  set(FFTW_FLOAT_LIB_FOUND TRUE)
+  set(FFTW_LIBRARIES ${FFTW_LIBRARIES} ${FFTW_FLOAT_LIB})
+else()
+  set(FFTW_FLOAT_LIB_FOUND FALSE)
+endif()
+
+if (FFTW_LONGDOUBLE_LIB)
+  set(FFTW_LONGDOUBLE_LIB_FOUND TRUE)
+  set(FFTW_LIBRARIES ${FFTW_LIBRARIES} ${FFTW_LONGDOUBLE_LIB})
+else()
+  set(FFTW_LONGDOUBLE_LIB_FOUND FALSE)
+endif()
+
+if (FFTW_THREADS_LIB)
+  set(FFTW_THREADS_LIB_FOUND TRUE)
+  set(FFTW_LIBRARIES ${FFTW_LIBRARIES} ${FFTW_THREADS_LIB})
+else()
+  set(FFTW_THREADS_LIB_FOUND FALSE)
+endif()
+
+if (FFTW_FLOAT_THREADS_LIB)
+  set(FFTW_FLOAT_THREADS_LIB_FOUND TRUE)
+  set(FFTW_LIBRARIES ${FFTW_LIBRARIES} ${FFTW_FLOAT_THREADS_LIB})
+else()
+  set(FFTW_FLOAT_THREADS_LIB_FOUND FALSE)
+endif()
+
+if (FFTW_LONGDOUBLE_THREADS_LIB)
+  set(FFTW_LONGDOUBLE_THREADS_LIB_FOUND TRUE)
+  set(FFTW_LIBRARIES ${FFTW_LIBRARIES} ${FFTW_LONGDOUBLE_THREADS_LIB})
+else()
+  set(FFTW_LONGDOUBLE_THREADS_LIB_FOUND FALSE)
+endif()
+
+if (FFTW_OPENMP_LIB)
+  set(FFTW_OPENMP_LIB_FOUND TRUE)
+  set(FFTW_LIBRARIES ${FFTW_LIBRARIES} ${FFTW_OPENMP_LIB})
+else()
+  set(FFTW_OPENMP_LIB_FOUND FALSE)
+endif()
+
+if (FFTW_FLOAT_OPENMP_LIB)
+  set(FFTW_FLOAT_OPENMP_LIB_FOUND TRUE)
+  set(FFTW_LIBRARIES ${FFTW_LIBRARIES} ${FFTW_FLOAT_OPENMP_LIB})
+else()
+  set(FFTW_FLOAT_OPENMP_LIB_FOUND FALSE)
+endif()
+
+if (FFTW_LONGDOUBLE_OPENMP_LIB)
+  set(FFTW_LONGDOUBLE_OPENMP_LIB_FOUND TRUE)
+  set(FFTW_LIBRARIES ${FFTW_LIBRARIES} ${FFTW_LONGDOUBLE_OPENMP_LIB})
+else()
+  set(FFTW_LONGDOUBLE_OPENMP_LIB_FOUND FALSE)
+endif()
+
+#--------------------------------------- end components
+
+set( CMAKE_FIND_LIBRARY_SUFFIXES ${CMAKE_FIND_LIBRARY_SUFFIXES_SAV} )
+
+include(FindPackageHandleStandardArgs)
+
+find_package_handle_standard_args(FFTW
+        REQUIRED_VARS FFTW_INCLUDE_DIRS
+        HANDLE_COMPONENTS
+        )
+
+mark_as_advanced(
+        FFTW_INCLUDE_DIRS
+        FFTW_LIBRARIES
+        FFTW_FLOAT_LIB
+        FFTW_DOUBLE_LIB
+        FFTW_LONGDOUBLE_LIB
+        FFTW_FLOAT_THREADS_LIB
+        FFTW_DOUBLE_THREADS_LIB
+        FFTW_LONGDOUBLE_THREADS_LIB
+        FFTW_FLOAT_OPENMP_LIB
+        FFTW_DOUBLE_OPENMP_LIB
+        FFTW_LONGDOUBLE_OPENMP_LIB
+        )
+
