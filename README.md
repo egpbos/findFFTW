@@ -10,28 +10,29 @@ find_package(FFTW [REQUIRED] [QUIET] [COMPONENTS component1 ... componentX] )
 
 This module sets the following variables:
 - `FFTW_FOUND`                  ... true if fftw is found on the system
-- `FFTW_[component]_LIB_FOUND`  ... true if the component is found on the system (see components below)
+- `[component]_LIB_FOUND`  ... true if the component is found on the system (see components below)
 - `FFTW_LIBRARIES`              ... full paths to all found fftw libraries
-- `FFTW_[component]_LIB`        ... full path to one of the components (see below)
+- `[component]_LIB`        ... full path to one of the components (see below)
 - `FFTW_INCLUDE_DIRS`           ... fftw include directory paths
 
 The following variables will be checked by the module:
 - `FFTW_USE_STATIC_LIBS`        ... if true, only static libraries are found, otherwise both static and shared.
+- `FFTW_USE_MKL`                ... if true, use the MKL version of FFTW
 - `FFTW_ROOT`                   ... if set, the libraries are exclusively searched under this path.
 
-This package supports the following components:
-- `FLOAT_LIB`
-- `DOUBLE_LIB`
-- `LONGDOUBLE_LIB`
-- `FLOAT_THREADS_LIB`
-- `DOUBLE_THREADS_LIB`
-- `LONGDOUBLE_THREADS_LIB`
-- `FLOAT_OPENMP_LIB`
-- `DOUBLE_OPENMP_LIB`
-- `LONGDOUBLE_OPENMP_LIB`
+This package searches for different components depending on if FFTW_USE_MKL is set to true.
+For non-MKL, the package search for the following components:
+- `FFTW_FLOAT_LIB`
+- `FFTW_DOUBLE_LIB`
+- `FFTW_LONGDOUBLE_LIB`
+- `FFTW_FLOAT_THREADS_LIB`
+- `FFTW_DOUBLE_THREADS_LIB`
+- `FFTW_LONGDOUBLE_THREADS_LIB`
+- `FFTW_FLOAT_OPENMP_LIB`
+- `FFTW_DOUBLE_OPENMP_LIB`
+- `FFTW_LONGDOUBLE_OPENMP_LIB`
 
 and the following linking targets
-
 - `FFTW::Float`
 - `FFTW::Double`
 - `FFTW::LongDouble`
@@ -41,6 +42,13 @@ and the following linking targets
 - `FFTW::FloatOpenMP`
 - `FFTW::DoubleOpenMP`
 - `FFTW::LongDoubleOpenMP`
+
+For MKL, the package searches for the following components:
+- `MKL_INTEL_ILP64_LIB` (64-bit OS)
+- `MKL_INTEL_C_LIB` (32-bit Windows OS)
+- `MKL_INTEL_LIB` (32-bit non-Windows OS)
+- `MKL_CORE_LIB`
+- `MKL_SEQUENTIAL_LIB`
 
 # Adding to your project
 
