@@ -29,6 +29,9 @@ This package supports the following components:
 - `FLOAT_OPENMP_LIB`
 - `DOUBLE_OPENMP_LIB`
 - `LONGDOUBLE_OPENMP_LIB`
+- `FLOAT_MPI_LIB`
+- `DOUBLE_MPI_LIB`
+- `LONGDOUBLE_MPI_LIB`
 
 and the following linking targets
 
@@ -41,6 +44,9 @@ and the following linking targets
 - `FFTW::FloatOpenMP`
 - `FFTW::DoubleOpenMP`
 - `FFTW::LongDoubleOpenMP`
+- `FFTW::FloatMPI`
+- `FFTW::DoubleMPI`
+- `FFTW::LongDoubleMPI`
 
 # Adding to your project
 
