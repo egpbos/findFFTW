@@ -7,7 +7,7 @@
 #   Copyright (c) 2017, Patrick Bos
 #
 # Usage:
-#   find_package(FFTW [REQUIRED] [QUIET] [COMPONENTS component1 ... componentX] )
+#   find_package(FFTW [version] [REQUIRED] [QUIET] [COMPONENTS component1 ... componentX] )
 #
 # It sets the following variables:
 #   FFTW_FOUND                  ... true if fftw is found on the system
@@ -15,6 +15,7 @@
 #   FFTW_LIBRARIES              ... full paths to all found fftw libraries
 #   FFTW_[component]_LIB        ... full path to one of the components (see below)
 #   FFTW_INCLUDE_DIRS           ... fftw include directory paths
+#   FFTW_VERSION                ... fftw version found
 #
 # The following variables will be checked by the function
 #   FFTW_USE_STATIC_LIBS        ... if true, only static libraries are found, otherwise both static and shared.
@@ -394,10 +395,38 @@ endif()
 
 set( CMAKE_FIND_LIBRARY_SUFFIXES ${CMAKE_FIND_LIBRARY_SUFFIXES_SAV} )
 
+# Deduce the version
+execute_process(COMMAND fftw-wisdom-to-conf -V
+                RESULT_VARIABLE success
+                OUTPUT_VARIABLE stdout
+                ERROR_VARIABLE stderr)
+if (success EQUAL 0)
+    string(REGEX MATCH "FFTW *version *([0-9]+([.][0-9]+([.][0-9]+)?)?)"
+            _version ${stdout}
+           )
+    string(REPLACE " " ";" _version_list ${_version})
+    list(GET _version_list -1 FFTW_VERSION)
+    set(_version_list)
+    set(_version)
+else()
+    message("Error running fftw-wisdom-to-conf. Could not determine FFTW version
+Output:
+${stdout}
+
+Error:
+${stderr}
+")
+    set(FFTW_VERSION)
+endif()
+set(stdout)
+set(stderr)
+set(success)
+
 include(FindPackageHandleStandardArgs)
 
 find_package_handle_standard_args(FFTW
     REQUIRED_VARS FFTW_INCLUDE_DIRS
+    VERSION_VAR FFTW_VERSION
     HANDLE_COMPONENTS
     )
 
@@ -416,4 +445,5 @@ mark_as_advanced(
     FFTW_FLOAT_MPI_LIB
     FFTW_DOUBLE_MPI_LIB
     FFTW_LONGDOUBLE_MPI_LIB
+    FFTW_VERSION
     )
