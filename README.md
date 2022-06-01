@@ -5,7 +5,7 @@ CMake module for finding FFTW 3 using find_package
 Once added to your project, this module allows you to find FFTW libraries and headers using the CMake `find_package` command:
 
 ```cmake
-find_package(FFTW [REQUIRED] [QUIET] [COMPONENTS component1 ... componentX] )
+find_package(FFTW [version] [REQUIRED] [QUIET] [COMPONENTS component1 ... componentX] )
 ```
 
 This module sets the following variables:
@@ -14,6 +14,7 @@ This module sets the following variables:
 - `FFTW_LIBRARIES`              ... full paths to all found fftw libraries
 - `FFTW_[component]_LIB`        ... full path to one of the components (see below)
 - `FFTW_INCLUDE_DIRS`           ... fftw include directory paths
+-  FFTW_VERSION                 ... fftw version found
 
 The following variables will be checked by the module:
 - `FFTW_USE_STATIC_LIBS`        ... if true, only static libraries are found, otherwise both static and shared.
